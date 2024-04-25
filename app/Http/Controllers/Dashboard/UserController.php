@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Role;
 use Hash;
-
+use App\Jobs\SendTempLoginEmail;
 class UserController extends Controller
 {
     /**
@@ -47,6 +47,19 @@ class UserController extends Controller
             $user->password = Hash::make($request->password);
             $user->role = $request->role;
             $user->save();
+
+            // Mail the user with temp login
+            $emailData = [
+                'first_name'=>$request->fname,
+                'email'=>$request->email,
+                'password'=>$request->password
+            ];
+            
+
+            // Send email via queue
+            dispatch(new SendTempLoginEmail($emailData));
+
+            
             return response()->json(['success'=> true]);
         }
         catch(\Exception $e)
